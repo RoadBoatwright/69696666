@@ -11,7 +11,11 @@ export function computeRoi(conversionValue: number, spend: number): RoiResult {
   if (!Number.isFinite(spend) || spend <= 0 || !Number.isFinite(conversionValue)) {
     return { kind: 'not_computable', note: '不可计算' };
   }
-  return { kind: 'value', value: (conversionValue - spend) / spend };
+  const roi = (conversionValue - spend) / spend;
+  if (!Number.isFinite(roi)) {
+    return { kind: 'not_computable', note: '不可计算' };
+  }
+  return { kind: 'value', value: roi };
 }
 
 /** 各平台原生指标字段别名表（归一化用，需求 18.1、18.2）。 */

@@ -14,10 +14,12 @@ describe('数据回传服务属性测试', () => {
         (value, spend) => {
           const result = computeRoi(value, spend);
           if (spend > 0) {
-            expect(result.kind).toBe('value');
             if (result.kind === 'value') {
               expect(Number.isFinite(result.value)).toBe(true);
               expect(result.value).toBeCloseTo((value - spend) / spend, 8);
+            } else {
+              // 极小花费导致结果溢出为非有限值时，同样标「不可计算」。
+              expect(Number.isFinite((value - spend) / spend)).toBe(false);
             }
           } else {
             expect(result).toEqual({ kind: 'not_computable', note: '不可计算' });
