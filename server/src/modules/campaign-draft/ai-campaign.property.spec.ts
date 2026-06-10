@@ -7,7 +7,12 @@ import {
 } from './pure/ai-campaign.pure';
 import { MISSING_ITEM_LABELS } from './domain/ai-campaign';
 import type { AssetRef } from '../platform-adapter/domain/platform-adapter';
-import type { BuyerPersona, DraftConfirmStatus, GenerateDraftInput } from './domain/ai-campaign';
+import type {
+  BuyerPersona,
+  DraftConfirmStatus,
+  GenerateDraftInput,
+  ReviewMode,
+} from './domain/ai-campaign';
 
 /**
  * AI 辅助建广告引擎属性测试（组件 5，需求 9）。
@@ -49,7 +54,7 @@ describe('AI 辅助建广告引擎属性测试（fast-check）', () => {
 
   it('Property 18: 专家把关档新草案恒「待确认」且不可投放；全自动档「已确认」可投放', () => {
     fc.assert(
-      fc.property(fc.constantFrom('全自动', '专家把关' as const), (mode) => {
+      fc.property(fc.constantFrom<ReviewMode>('全自动', '专家把关'), (mode) => {
         const initial = initialConfirmStatusForMode(mode);
         if (mode === '专家把关') {
           expect(initial).toBe('待确认');

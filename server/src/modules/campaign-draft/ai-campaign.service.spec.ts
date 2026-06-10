@@ -1,9 +1,6 @@
 import type { Repository } from 'typeorm';
 
-import {
-  AiCampaignService,
-  DraftNotConfirmedError,
-} from './ai-campaign.service';
+import { AiCampaignService, DraftNotConfirmedError } from './ai-campaign.service';
 import type { CredentialManagerService } from '../credential/credential-manager.service';
 import { CampaignDraft } from './entities/campaign-draft.entity';
 import { GLOBAL_REVIEW_MODE_SCOPE, ReviewModeConfig } from './entities/review-mode-config.entity';
@@ -18,7 +15,7 @@ import type { BuyerPersona, OptimizationSnapshot, PlatformDraft } from './domain
 import type { AssetRef } from '../platform-adapter/domain/platform-adapter';
 
 /** 通用内存仓储桩。 */
-function makeRepo<T extends { id?: string }>(
+function makeRepo<T extends object & { id?: string }>(
   prefix: string,
   keyOf?: (e: T) => string,
 ): { repo: Repository<T>; store: Map<string, T> } {
@@ -30,10 +27,11 @@ function makeRepo<T extends { id?: string }>(
     if (keyOf) {
       return keyOf(e);
     }
-    if (!e.id) {
-      e.id = `${prefix}-${++seq}`;
+    const withId = e as T & { id?: string };
+    if (!withId.id) {
+      withId.id = `${prefix}-${++seq}`;
     }
-    return e.id;
+    return withId.id;
   };
   const repo = {
     create: (e: Partial<T>) => ({ ...e }) as T,
@@ -94,8 +92,7 @@ function setup(deps: Deps) {
 
   const provider: OptimizationDataProvider = {
     loadSnapshot:
-      deps.provider?.loadSnapshot ??
-      (async (campaignId: string) => emptySnapshot(campaignId)),
+      deps.provider?.loadSnapshot ?? (async (campaignId: string) => emptySnapshot(campaignId)),
   };
 
   const published: string[][] = [];
@@ -152,10 +149,29 @@ describe('AiCampaignService（组件 5，需求 9）', () => {
       expect(r).toEqual({ unavailable: true });
     });
 
-    it('缺产品定位描述返回缺失项（需求 9.8）', async () => {
+    it('缺产品定位描述时由 AI 从素材推理产品信息后推导画像', async () => {
       const { service } = setup({ geminiAvailable: true });
       const r = await service.derivePersona(ACTOR, { positioning: '', materials: MATERIALS });
-      expect(r).toEqual({ error: ['产品定位描述'] });
+      expect(r).toEqual({ persona: PERSONA, source: 'AI自动推导' });
+    });
+
+    it('缺素材时返回缺失项（需求 9.8）', async () => {
+      const { service } = setup({ geminiAvailable: true });
+      const r = await service.derivePersona(ACTOR, { positioning: '', materials: [] });
+      expect(r).toEqual({ error: ['成品广告素材'] });
+    });
+
+    it('国家/地区缺失时默认泰国（产品约定）', async () => {
+      const { service } = setup({ geminiAvailable: false });
+      const r = await service.derivePersona(ACTOR, {
+        positioning: 'x',
+        materials: MATERIALS,
+        override: { geo: '', industry: 'SaaS', jobRole: 'CEO' },
+      });
+      expect(r).toEqual({
+        persona: { geo: '泰国', industry: 'SaaS', jobRole: 'CEO' },
+        source: '人工指定',
+      });
     });
 
     it('AI 推导成功标记来源「AI自动推导」', async () => {
@@ -173,8 +189,9 @@ describe('AiCampaignService（组件 5，需求 9）', () => {
         materials: [],
         persona: { geo: '', industry: '', jobRole: '' },
       });
+      // 国家/地区缺失时默认泰国，不再计入缺失项（产品约定）。
       expect(r).toEqual({
-        error: ['成品广告素材', '国家/地区', '行业', '职位'],
+        error: ['成品广告素材', '行业', '职位'],
       });
       expect(draft.store.size).toBe(0);
     });

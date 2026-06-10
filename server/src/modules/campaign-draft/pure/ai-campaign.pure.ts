@@ -9,6 +9,7 @@
  *  - 受限自动优化上下限判定 {@link classifyAdjustment}（需求 9.11、9.13）。
  */
 import {
+  DEFAULT_PERSONA_GEO,
   MISSING_ITEM_LABELS,
   PERSONA_DIMENSIONS,
   SUFFICIENT_HIGH_INTENT_THRESHOLD,
@@ -96,22 +97,33 @@ export function collectMissingItems(input: GenerateDraftInput): string[] {
 }
 
 /**
- * 校验 AI 自动推导画像所需的产品定位描述与素材是否齐备（需求 9.1、9.8）。
+ * 校验 AI 自动推导画像所需输入是否齐备（需求 9.1、9.8）。
  *
- * 返回缺失项中文名称集合；为空表示可推导画像。
+ * 仅成品素材为必填；产品定位描述可缺省，缺省时由 AI 从素材（广告视频/推广素材）
+ * 推理产品信息后再推导画像。返回缺失项中文名称集合；为空表示可推导画像。
  */
 export function collectPersonaInputMissingItems(input: {
   positioning: string;
   materials: unknown[];
 }): string[] {
   const missing: string[] = [];
-  if (typeof input.positioning !== 'string' || input.positioning.trim().length === 0) {
-    missing.push('产品定位描述');
-  }
   if (!Array.isArray(input.materials) || input.materials.length === 0) {
     missing.push(MISSING_ITEM_LABELS.materials);
   }
   return missing;
+}
+
+/**
+ * 应用画像默认值：国家/地区缺失时默认泰国（产品约定）。
+ *
+ * 行业与职位无默认值，仍按需求 9.8 参与缺失项反馈。
+ */
+export function applyPersonaDefaults(persona: Partial<BuyerPersona>): Partial<BuyerPersona> {
+  const geo =
+    typeof persona.geo === 'string' && persona.geo.trim().length > 0
+      ? persona.geo
+      : DEFAULT_PERSONA_GEO;
+  return { ...persona, geo };
 }
 
 // ---------------------------------------------------------------------------

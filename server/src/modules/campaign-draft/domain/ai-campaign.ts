@@ -32,6 +32,13 @@ export interface BuyerPersona {
   jobRole: string;
 }
 
+/**
+ * 国家/地区维度默认值：泰国。
+ *
+ * 产品约定：未显式指定且 AI 未能推导出国家/地区时，画像默认投向泰国。
+ */
+export const DEFAULT_PERSONA_GEO = '泰国';
+
 /** 买家画像核心维度名称（用于缺失项完整反馈，需求 9.8）。 */
 export const PERSONA_DIMENSIONS: readonly (keyof BuyerPersona)[] = ['geo', 'industry', 'jobRole'];
 

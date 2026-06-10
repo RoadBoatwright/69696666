@@ -41,6 +41,7 @@ import { LeadEnrichmentModule } from './modules/lead-enrichment/lead-enrichment.
 import { VerificationModule } from './modules/verification/verification.module';
 import { OpportunityScoringModule } from './modules/opportunity-scoring/opportunity-scoring.module';
 import { FollowupRoutingModule } from './modules/followup-routing/followup-routing.module';
+import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { OpportunityDashboardModule } from './modules/opportunity-dashboard/opportunity-dashboard.module';
 import { BenchmarkModule } from './modules/benchmark/benchmark.module';
 import { IndustrySurveyModule } from './modules/industry-survey/industry-survey.module';
@@ -104,6 +105,9 @@ import { IndustrySurveyModule } from './modules/industry-survey/industry-survey.
     OpportunityDashboardModule,
     BenchmarkModule,
     IndustrySurveyModule,
+
+    // 异步调度接线（任务 22）
+    SchedulingModule,
   ],
 })
 export class AppModule {}

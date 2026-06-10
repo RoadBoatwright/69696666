@@ -18,6 +18,12 @@ export const QUEUE_NAMES = {
   REVIEW_STATUS_POLL: 'review-status-poll',
   /** 线索回流与重试（需求 12.4、12.7）。 */
   LEAD_INGEST: 'lead-ingest',
+  /** 线索回流后触发的 Gemini 背调与失败重试（需求 15.2、15.6）。 */
+  VERIFICATION_RUN: 'verification-run',
+  /** 商机意向等级重算（需求 16.5）。 */
+  LEVEL_RECOMPUTE: 'level-recompute',
+  /** 商机自动跟进路由与失败重试（需求 17.3、17.7）。 */
+  FOLLOWUP_ROUTE: 'followup-route',
 } as const;
 
 /** 已登记的队列名联合类型。 */
@@ -35,4 +41,7 @@ export const REGISTERED_QUEUE_NAMES: readonly QueueName[] = [
   QUEUE_NAMES.METRICS_PULL,
   QUEUE_NAMES.REVIEW_STATUS_POLL,
   QUEUE_NAMES.LEAD_INGEST,
+  QUEUE_NAMES.VERIFICATION_RUN,
+  QUEUE_NAMES.LEVEL_RECOMPUTE,
+  QUEUE_NAMES.FOLLOWUP_ROUTE,
 ];

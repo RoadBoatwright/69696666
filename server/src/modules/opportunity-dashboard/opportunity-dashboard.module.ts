@@ -1,7 +1,26 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { FollowupRecord } from '../followup-routing/entities';
+import { LevelChangeRecord } from '../opportunity-scoring/entities';
+import { Opportunity } from '../opportunity-scoring/entities/opportunity.entity';
+import { VerificationResult, VerifiedField } from '../verification/entities';
+import { OpportunityDashboardService } from './opportunity-dashboard.service';
 
 /**
- * 生意机会看板服务（组件 28，需求 40、42-46）。骨架占位，后续任务实现。
+ * 商机清单/单客户详情/导出模块（任务 23.6-23.8，需求 21.13-21.17）。
  */
-@Module({})
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      Opportunity,
+      VerificationResult,
+      VerifiedField,
+      LevelChangeRecord,
+      FollowupRecord,
+    ]),
+  ],
+  providers: [OpportunityDashboardService],
+  exports: [OpportunityDashboardService],
+})
 export class OpportunityDashboardModule {}
