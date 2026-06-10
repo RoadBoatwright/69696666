@@ -118,34 +118,34 @@
 
 - [x] 15. 检查点 - 建广告与投放测试通过
 
-- [ ] 16. 实现线索收集服务（组件 8，需求 14）
-  - [-] 16.1 高门槛留资表单（公司名+姓名+电话+邮箱必填）+ 回流升格商机 + 去重 _Requirements: 14.1-14.8_
-  - [-] 16.4 留资质量闸门（邮箱/电话格式校验、一次性邮箱与无效占位识别、机器人/批量反作弊、企业身份初判；低质量/疑似作弊不计入有效线索）_Requirements: 14.9-14.12_
-  - [ ]* 16.2 属性测试 Property 30 留资高门槛必填校验 _Requirements: 14.4_
-  - [ ]* 16.3 属性测试 Property 31 线索去重幂等保留最早 _Requirements: 14.7_
+- [x] 16. 实现线索收集服务（组件 8，需求 14）
+  - [x] 16.1 高门槛留资表单（公司名+姓名+电话+邮箱必填）+ 回流升格商机 + 去重 _Requirements: 14.1-14.8_
+  - [x] 16.4 留资质量闸门（邮箱/电话格式校验、一次性邮箱与无效占位识别、机器人/批量反作弊、企业身份初判；低质量/疑似作弊不计入有效线索）_Requirements: 14.9-14.12_
+  - [x]* 16.2 属性测试 Property 30 留资高门槛必填校验 _Requirements: 14.4_
+  - [x]* 16.3 属性测试 Property 31 线索去重幂等保留最早 _Requirements: 14.7_
 
-- [ ] 17. 实现 Gemini 背调服务（组件 9，需求 15）
-  - [ ] 17.1 Gemini 凭据二态 + isAvailable + verify 落库 _Requirements: 15.1, 15.2_
-  - [ ] 17.2 背调失败保留原始数据待重试 _Requirements: 15.4_
-  - [ ] 17.3 mergeFields 冲突合并纯函数 _Requirements: 15.5_
+- [x] 17. 实现 Gemini 背调服务（组件 9，需求 15）
+  - [x] 17.1 Gemini 凭据二态 + isAvailable + verify 落库 _Requirements: 15.1, 15.2_
+  - [x] 17.2 背调失败保留原始数据待重试 _Requirements: 15.4_
+  - [x] 17.3 mergeFields 冲突合并纯函数 _Requirements: 15.5_
   - [ ]* 17.4 Gemini 背调集成测试（真实 Gemini API）_Requirements: 15.2, 15.4_
-  - [ ]* 17.5 属性测试 Property 35 凭据缺失降级仍存储商机 _Requirements: 15.3_
-  - [ ]* 17.6 属性测试 Property 36 背调失败保留原始数据 _Requirements: 15.4_
-  - [ ]* 17.7 属性测试 Property 37 冲突字段同时保留标待核实 _Requirements: 15.5_
+  - [x]* 17.5 属性测试 Property 35 凭据缺失降级仍存储商机 _Requirements: 15.3_
+  - [x]* 17.6 属性测试 Property 36 背调失败保留原始数据 _Requirements: 15.4_
+  - [x]* 17.7 属性测试 Property 37 冲突字段同时保留标待核实 _Requirements: 15.5_
 
-- [ ] 18. 实现商机分级引擎（组件 10，需求 16）
-  - [ ] 18.1 score/levelRank 纯函数 + listByLevel + recompute _Requirements: 16.1-16.6_
-  - [ ]* 18.2 属性测试 Property 38 等级唯一性与取值域 _Requirements: 16.1, 16.2_
-  - [ ]* 18.3 属性测试 Property 39 缺失置未分级记缺失项 _Requirements: 16.3_
-  - [ ]* 18.4 属性测试 Property 40 排序单调性 _Requirements: 16.4_
-  - [ ]* 18.5 属性测试 Property 41 重算覆盖并记录变更 _Requirements: 16.5, 16.6_
+- [x] 18. 实现商机分级引擎（组件 10，需求 16）
+  - [x] 18.1 score/levelRank 纯函数 + listByLevel + recompute _Requirements: 16.1-16.6_
+  - [x]* 18.2 属性测试 Property 38 等级唯一性与取值域 _Requirements: 16.1, 16.2_
+  - [x]* 18.3 属性测试 Property 39 缺失置未分级记缺失项 _Requirements: 16.3_
+  - [x]* 18.4 属性测试 Property 40 排序单调性 _Requirements: 16.4_
+  - [x]* 18.5 属性测试 Property 41 重算覆盖并记录变更 _Requirements: 16.5, 16.6_
 
-- [ ] 19. 实现跟进路由服务（组件 11，需求 17）
-  - [ ] 19.1 nextStatus 状态机 + autoRoute/manualRoute + generatePlaybook + recordBuyerReply _Requirements: 17.1-17.7, 21.6_
+- [x] 19. 实现跟进路由服务（组件 11，需求 17）
+  - [x] 19.1 nextStatus 状态机 + autoRoute/manualRoute + generatePlaybook + recordBuyerReply _Requirements: 17.1-17.7, 21.6_
   - [ ]* 19.2 WhatsApp/CRM 路由集成测试（真实通道沙盒）_Requirements: 17.3, 17.4, 17.6, 17.7_
-  - [ ]* 19.3 属性测试 Property 42 跟进状态机综合不变量 _Requirements: 17.1, 17.3, 17.6, 17.7_
+  - [x]* 19.3 属性测试 Property 42 跟进状态机综合不变量 _Requirements: 17.1, 17.3, 17.6, 17.7_
 
-- [ ] 20. 检查点 - 商机闭环测试通过
+- [x] 20. 检查点 - 商机闭环测试通过
 
 - [ ] 21. 实现数据回传服务与审核同步（组件 12、13，需求 18、19、20）
   - [ ] 21.1 指标拉取/归一化/computeRoi/单平台失败隔离 _Requirements: 18.1-18.7_
