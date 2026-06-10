@@ -1,25 +1,17 @@
 import { Injectable } from '@nestjs/common';
 
 import { CredentialManagerService } from '../../credential/credential-manager.service';
+import { extractJsonText, geminiChatCompletion } from '../../../common/llm/gemini-chat';
 import type { AssetRef } from '../../platform-adapter/domain/platform-adapter';
 import type { BuyerPersona, PlatformDraft } from '../domain/ai-campaign';
 import { ACTIVE_PLATFORMS } from '../../unified-model/domain/unified-model';
 import type { GeminiClient } from './index';
 
-/** Gemini REST API 基址（generativelanguage，真实服务）。 */
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-
-/** 默认使用的 Gemini 模型。 */
-const GEMINI_MODEL = 'gemini-1.5-flash';
-
-/** Gemini 调用超时（毫秒）。 */
-const GEMINI_TIMEOUT_MS = 30_000;
-
 /**
  * 默认 Gemini 客户端（组件 5 端口实现，需求 9.1、9.2、9.7）。
  *
- * 经凭据管理器 `useDecrypted('gemini', 'apiKey', …)` 在内存中取 API Key 调用**真实 Google
- * Gemini API**（generativelanguage REST），用后立即清理（需求 6.3、6.4）。凭据未填入时
+ * 经凭据管理器 `useDecrypted('gemini', 'apiKey', …)` 在内存中取 API Key，经 **Gemini
+ * 中转（OpenAI 兼容 Chat Completions）**调用真实模型，用后立即清理（需求 6.3、6.4）。凭据未填入时
  * 由凭据管理器抛「该平台凭据未配置」，调用方（AI 辅助建广告服务）据此降级为不可用，
  * 绝不以假数据顶替业务逻辑（需求 9.7）。
  *
@@ -51,37 +43,15 @@ export class DefaultGeminiClient implements GeminiClient {
   }
 
   /**
-   * 调用真实 Gemini generateContent 端点（需求 9.1、9.2）。
+   * 经 Gemini 中转（OpenAI 兼容）调用真实模型（需求 9.1、9.2）。
    *
-   * 经凭据管理器解密取 API Key 注入查询参数，用后立即清理（需求 6.3、6.4）；
+   * 经凭据管理器解密取 API Key 注入 Bearer 头，用后立即清理（需求 6.3、6.4）；
    * 凭据未配置时由 `useDecrypted` 抛「该平台凭据未配置」向上传播触发降级（需求 9.7）。
    */
   private async generate(prompt: string): Promise<string> {
-    return this.credentials.useDecrypted('gemini', 'apiKey', async (apiKey) => {
-      const url = `${GEMINI_API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(
-        apiKey,
-      )}`;
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json' },
-          }),
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          throw new Error(`Gemini API 调用失败：HTTP ${response.status}`);
-        }
-        const data = (await response.json()) as GeminiResponse;
-        return extractText(data);
-      } finally {
-        clearTimeout(timer);
-      }
-    });
+    return this.credentials.useDecrypted('gemini', 'apiKey', (apiKey) =>
+      geminiChatCompletion(apiKey, prompt),
+    );
   }
 
   private buildPersonaPrompt(positioning: string, materials: AssetRef[]): string {
@@ -111,7 +81,7 @@ export class DefaultGeminiClient implements GeminiClient {
 
   /** 解析画像 JSON；字段缺失时回退为空串由上层判定缺失（需求 9.8）。 */
   private parsePersona(text: string): BuyerPersona {
-    const obj = safeParseObject(text);
+    const obj = safeParseObject(extractJsonText(text));
     return {
       geo: stringOf(obj.geo),
       industry: stringOf(obj.industry),
@@ -127,7 +97,7 @@ export class DefaultGeminiClient implements GeminiClient {
     text: string,
     input: { materials: AssetRef[]; persona: BuyerPersona },
   ): PlatformDraft[] {
-    const parsed = safeParseObject(text);
+    const parsed = safeParseObject(extractJsonText(text));
     const byPlatform = (parsed.platforms ?? {}) as Record<string, Record<string, unknown>>;
 
     return ACTIVE_PLATFORMS.map((platform) => {
@@ -154,15 +124,6 @@ export class DefaultGeminiClient implements GeminiClient {
       };
     });
   }
-}
-
-interface GeminiResponse {
-  candidates?: { content?: { parts?: { text?: string }[] } }[];
-}
-
-/** 从 Gemini 响应中提取首个候选文本。 */
-function extractText(data: GeminiResponse): string {
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 }
 
 /** 安全解析 JSON 对象；失败返回空对象（不抛错，由上层判定缺失/回退）。 */

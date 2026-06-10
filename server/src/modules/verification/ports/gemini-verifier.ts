@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { CredentialManagerService } from '../../credential/credential-manager.service';
+import { extractJsonText, geminiChatCompletion } from '../../../common/llm/gemini-chat';
 import {
   VERIFIABLE_FIELDS,
   type GeminiVerificationOutput,
@@ -15,21 +16,13 @@ export interface GeminiVerifier {
 
 export const GEMINI_VERIFIER = Symbol('GEMINI_VERIFIER');
 
-/** Gemini REST API 基址（generativelanguage，真实服务）。 */
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-
-/** 默认使用的 Gemini 模型。 */
-const GEMINI_MODEL = 'gemini-1.5-flash';
-
-/** Gemini 调用超时（毫秒）。 */
-const GEMINI_TIMEOUT_MS = 30_000;
-
 /**
  * 默认 Gemini 背调端口实现（需求 15.2）。
  *
- * 经凭据管理器 `useDecrypted('gemini', 'apiKey', …)` 在内存中取 API Key 调用**真实
- * Google Gemini API**，用后立即清理（需求 6.3、6.4）。凭据未填入时由凭据管理器抛
- * 「该平台凭据未配置」，调用方据此降级（需求 15.3），绝不以假数据顶替业务逻辑。
+ * 经凭据管理器 `useDecrypted('gemini', 'apiKey', …)` 在内存中取 API Key，经 **Gemini
+ * 中转（OpenAI 兼容 Chat Completions）**调用真实模型，用后立即清理（需求 6.3、6.4）。
+ * 凭据未填入时由凭据管理器抛「该平台凭据未配置」，调用方据此降级（需求 15.3），
+ * 绝不以假数据顶替业务逻辑。
  */
 @Injectable()
 export class DefaultGeminiVerifier implements GeminiVerifier {
@@ -42,31 +35,9 @@ export class DefaultGeminiVerifier implements GeminiVerifier {
   }
 
   private async generate(prompt: string): Promise<string> {
-    return this.credentials.useDecrypted('gemini', 'apiKey', async (apiKey) => {
-      const url = `${GEMINI_API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(
-        apiKey,
-      )}`;
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json' },
-          }),
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          throw new Error(`Gemini API 调用失败：HTTP ${response.status}`);
-        }
-        const data = (await response.json()) as GeminiResponse;
-        return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-      } finally {
-        clearTimeout(timer);
-      }
-    });
+    return this.credentials.useDecrypted('gemini', 'apiKey', (apiKey) =>
+      geminiChatCompletion(apiKey, prompt),
+    );
   }
 
   private buildPrompt(lead: RawLead): string {
@@ -81,7 +52,7 @@ export class DefaultGeminiVerifier implements GeminiVerifier {
   }
 
   private parse(text: string): GeminiVerificationOutput {
-    const obj = safeParseObject(text);
+    const obj = safeParseObject(extractJsonText(text));
     const rawFields =
       typeof obj.fields === 'object' && obj.fields !== null
         ? (obj.fields as Record<string, unknown>)
@@ -103,10 +74,6 @@ export class DefaultGeminiVerifier implements GeminiVerifier {
       summary: typeof obj.summary === 'string' ? obj.summary : null,
     };
   }
-}
-
-interface GeminiResponse {
-  candidates?: { content?: { parts?: { text?: string }[] } }[];
 }
 
 /** 安全解析 JSON 对象；失败返回空对象。 */
