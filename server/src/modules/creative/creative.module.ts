@@ -1,7 +1,15 @@
 import { Module } from '@nestjs/common';
 
+import { ExtensionModule } from '../extension/extension.module';
+
 /**
- * 创意服务（AI 创意生成，需求 28）。骨架占位，后续任务实现。
+ * AI 创意增强（任务 37，需求 31）。
+ *
+ * 统一入口由 ExtensionService.generateCreatives 提供（TikTok Symphony / Google
+ * 生成式资产 / Meta 动态创意），本模块仅做能力聚合再导出。
  */
-@Module({})
+@Module({
+  imports: [ExtensionModule],
+  exports: [ExtensionModule],
+})
 export class CreativeModule {}

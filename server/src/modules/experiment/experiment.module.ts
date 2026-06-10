@@ -1,7 +1,17 @@
 import { Module } from '@nestjs/common';
 
+import { ExtensionModule } from '../extension/extension.module';
+import { ExperimentService } from './experiment.service';
+
 /**
- * 实验服务（A/B 实验，需求 26）。骨架占位，后续任务实现。
+ * A/B 实验服务（任务 34，需求 28）。
+ *
+ * 统一实验抽象（Meta Split Test / Google Experiments / TikTok Split Test），经
+ * 扩展能力网关路由到各平台真实 API。
  */
-@Module({})
+@Module({
+  imports: [ExtensionModule],
+  providers: [ExperimentService],
+  exports: [ExperimentService],
+})
 export class ExperimentModule {}

@@ -185,19 +185,19 @@
 
 ### 第六部分：高级投放能力全集（本期实现）
 
-- [ ] 28. 扩展能力调用网关框架 _Requirements: 22.1-22.6_
-- [ ] 29. Meta Advantage+ 全自动系列 _Requirements: 23.1-23.5_
-- [ ] 30. 商品目录与动态商品广告 _Requirements: 24.1-24.6_
-- [ ] 31. Google Performance Max 系列 _Requirements: 25.1-25.4_
-- [ ] 32. 智能出价策略全集 _Requirements: 26.1-26.4_
-- [ ] 33. TikTok Spark Ads _Requirements: 27.1-27.4_
-- [ ] 34. 统一 A/B 实验框架 _Requirements: 28.1-28.5_
-- [ ] 35. 投前效果预估 _Requirements: 29.1-29.4_
-- [ ] 36. 消息类广告 CTWA/CTM _Requirements: 30.1-30.5_
-- [ ] 37. AI 创意生成 _Requirements: 31.1-31.5_
-- [ ] 38. 离线/CRM 转化回传 _Requirements: 32.1-32.5_
-- [ ] 39. 广告版位管理（手动版位完整实现，自动版位已在统一模型层）_Requirements: 33.2, 33.3, 33.5, 33.6_
-- [ ] 40. LinkedIn B2B 扩展能力接口（第二期预留）_Requirements: 34.1-34.4_
+- [x] 28. 扩展能力调用网关框架 _Requirements: 22.1-22.6_
+- [x] 29. Meta Advantage+ 全自动系列 _Requirements: 23.1-23.5_
+- [x] 30. 商品目录与动态商品广告 _Requirements: 24.1-24.6_
+- [x] 31. Google Performance Max 系列 _Requirements: 25.1-25.4_
+- [x] 32. 智能出价策略全集 _Requirements: 26.1-26.4_
+- [x] 33. TikTok Spark Ads _Requirements: 27.1-27.4_
+- [x] 34. 统一 A/B 实验框架 _Requirements: 28.1-28.5_
+- [x] 35. 投前效果预估 _Requirements: 29.1-29.4_
+- [x] 36. 消息类广告 CTWA/CTM _Requirements: 30.1-30.5_
+- [x] 37. AI 创意生成 _Requirements: 31.1-31.5_
+- [x] 38. 离线/CRM 转化回传 _Requirements: 32.1-32.5_
+- [x] 39. 广告版位管理（手动版位完整实现，自动版位已在统一模型层）_Requirements: 33.2, 33.3, 33.5, 33.6_
+- [x] 40. LinkedIn B2B 扩展能力接口（第二期预留）_Requirements: 34.1-34.4_
 
 ### 第六部分之二：商机数据对外 API（供后续 CRM 接入）
 
