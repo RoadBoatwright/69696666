@@ -85,12 +85,16 @@ export class DefaultGeminiClient implements GeminiClient {
   }
 
   private buildPersonaPrompt(positioning: string, materials: AssetRef[]): string {
+    const hasPositioning = positioning.trim().length > 0;
     return [
       '你是资深外贸 B2B 投放策略专家。',
-      '请依据以下产品定位描述与成品广告素材，推导目标买家画像。',
+      hasPositioning
+        ? '请依据以下产品定位描述与成品广告素材，推导目标买家画像。'
+        : '产品信息未提供：请先从成品广告素材（广告视频/推广素材）推理出产品信息，再据此推导目标买家画像。',
       '仅输出 JSON：{"geo":"国家/地区","industry":"行业","jobRole":"职位"}。',
-      `产品定位描述：${positioning}`,
-      `成品素材数量：${materials.length}`,
+      '若无法确定国家/地区，默认输出「泰国」。',
+      ...(hasPositioning ? [`产品定位描述：${positioning}`] : []),
+      `成品素材引用：${JSON.stringify(materials.map((m) => m.assetId))}`,
     ].join('\n');
   }
 

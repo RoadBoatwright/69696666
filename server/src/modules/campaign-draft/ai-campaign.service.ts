@@ -18,6 +18,7 @@ import {
   type ReviewMode,
 } from './domain/ai-campaign';
 import {
+  applyPersonaDefaults,
   buildOptimizationSuggestions,
   canPublish as canPublishStatus,
   classifyAdjustment,
@@ -27,10 +28,7 @@ import {
   resolveReviewMode as resolveReviewModePure,
 } from './pure/ai-campaign.pure';
 import { CampaignDraft } from './entities/campaign-draft.entity';
-import {
-  GLOBAL_REVIEW_MODE_SCOPE,
-  ReviewModeConfig,
-} from './entities/review-mode-config.entity';
+import { GLOBAL_REVIEW_MODE_SCOPE, ReviewModeConfig } from './entities/review-mode-config.entity';
 import {
   AUTO_ADJUSTMENT_APPLIER,
   CAMPAIGN_PUBLISHER,
@@ -127,24 +125,28 @@ export class AiCampaignService {
    * 据产品定位描述与成品素材自动推导买家画像并标记来源（需求 9.1）。
    *
    * - Gemini 凭据未填入 → 返回 `{ unavailable: true }`（需求 9.7）。
-   * - 产品定位描述或成品素材缺失 → 返回 `{ error: 全部缺失项 }`，不推导（需求 9.8）。
+   * - 成品素材缺失 → 返回 `{ error: 全部缺失项 }`，不推导（需求 9.8）；产品定位描述可缺省，
+   *   缺省时由 AI 从素材推理产品信息后再推导画像。
    * - 投手显式指定画像（`override`）→ 直接采用并标记来源「人工指定」（需求 9.1）。
    */
   async derivePersona(
     _actor: Actor,
     input: { positioning: string; materials: AssetRef[]; override?: BuyerPersona },
-  ): Promise<{ persona: BuyerPersona; source: PersonaSource } | AiUnavailable | { error: string[] }> {
+  ): Promise<
+    { persona: BuyerPersona; source: PersonaSource } | AiUnavailable | { error: string[] }
+  > {
     // 投手显式指定：人工指定画像，无需 AI（需求 9.1）。
     if (input.override) {
+      const overridden = applyPersonaDefaults(input.override) as BuyerPersona;
       const missing = collectMissingItems({
         merchantId: '',
         materials: input.materials,
-        persona: input.override,
+        persona: overridden,
       }).filter((m) => m !== '成品广告素材');
       if (missing.length > 0) {
         return { error: missing };
       }
-      return { persona: input.override, source: '人工指定' };
+      return { persona: overridden, source: '人工指定' };
     }
 
     if (!(await this.credentials.isGeminiAvailable())) {
@@ -157,10 +159,12 @@ export class AiCampaignService {
     }
 
     try {
-      const persona = await this.gemini.derivePersona({
+      const raw = await this.gemini.derivePersona({
         positioning: input.positioning,
         materials: input.materials,
       });
+      // 国家/地区缺失时默认泰国（产品约定）。
+      const persona = applyPersonaDefaults(raw) as BuyerPersona;
       // AI 输出维度不全时按缺失项反馈（需求 9.8）。
       const personaMissing = collectMissingItems({
         merchantId: '',
@@ -196,7 +200,12 @@ export class AiCampaignService {
     _actor: Actor,
     input: GenerateDraftInput,
   ): Promise<CampaignDraft | AiUnavailable | { error: string[] }> {
-    // 1) 缺失项完整反馈（需求 9.8，Property 19）。
+    // 1) 缺失项完整反馈（需求 9.8，Property 19）；国家/地区缺失时默认泰国（产品约定）。
+    const normalized: GenerateDraftInput = {
+      ...input,
+      persona: applyPersonaDefaults(input.persona ?? {}) as BuyerPersona,
+    };
+    input = normalized;
     const missing = collectMissingItems(input);
     if (missing.length > 0) {
       return { error: missing };
@@ -338,9 +347,7 @@ export class AiCampaignService {
     try {
       snapshot = await this.dataProvider.loadSnapshot(campaignId);
     } catch (error) {
-      this.logger.warn(
-        `优化数据拉取失败：campaignId=${campaignId}，按数据不可用处理（需求 9.12）`,
-      );
+      this.logger.warn(`优化数据拉取失败：campaignId=${campaignId}，按数据不可用处理（需求 9.12）`);
       return { dataUnavailable: true };
     }
 
@@ -398,9 +405,7 @@ export class AiCampaignService {
         // 应用失败：保留原配置并记录原因（需求 9.14）。
         result.failed.push({
           suggestion,
-          reason: this.credentials.redact(
-            error instanceof Error ? error.message : String(error),
-          ),
+          reason: this.credentials.redact(error instanceof Error ? error.message : String(error)),
         });
       }
     }
